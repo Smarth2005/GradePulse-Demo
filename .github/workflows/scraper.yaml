@@ -1,0 +1,48 @@
+name: Academic Monitor
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Runs every 30 mins
+  workflow_dispatch: 
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # IMPORTANT: Installing Chrome for Selenium to work in Headless mode
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install dependencies
+        run: |
+          pip install selenium webdriver-manager requests python-dotenv
+          # If you have a requirements.txt, use: pip install -r requirements.txt
+
+      - name: Run Monitor
+        env:
+          USER_ID: ${{ secrets.USER_ID }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        # Ensure your python filename matches (monitor.py or webkiosk_script.py)
+        run: python monitor.py 
+
+      - name: Save Memory
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "System Update: Grade memory sync"
+          file_pattern: grades_data.txt
+          # Adding a push restriction to avoid unnecessary loops
+
+          skip_dirty_check: false
